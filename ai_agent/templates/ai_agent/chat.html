@@ -1,78 +1,279 @@
 <!doctype html>
-<html lang="bn">
-  <head>
-    <meta charset="UTF-8" />
-    <title>AI Agent</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="w-full max-w-2xl bg-white rounded-xl shadow-lg p-6">
-      <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">🤖 AI Agent</h1>
+<html lang="bn" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
 
-      <!-- Chat Box -->
-      <div id="chat-box" class="h-96 overflow-y-auto border rounded-lg p-4 mb-4 bg-gray-50 flex flex-col gap-3">
-        <p class="text-gray-400 text-center text-sm">কিছু জিজ্ঞেস করো...</p>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans:    ['DM Sans', 'sans-serif'],
+            bengali: ['Noto Serif Bengali', 'serif'],
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    /* Message fade-in */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .msg-appear { animation: fadeUp 0.2s ease forwards; }
+
+    /* Typing indicator dots */
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.2; }
+      40%            { opacity: 1; }
+    }
+    .dot-1 { animation: blink 1.2s infinite 0.0s; }
+    .dot-2 { animation: blink 1.2s infinite 0.2s; }
+    .dot-3 { animation: blink 1.2s infinite 0.4s; }
+
+    /* Thin scrollbar */
+    #chat-box::-webkit-scrollbar       { width: 4px; }
+    #chat-box::-webkit-scrollbar-track { background: transparent; }
+    #chat-box::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .dark #chat-box::-webkit-scrollbar-thumb { background: #374151; }
+  </style>
+</head>
+
+<body class="h-full bg-stone-100 dark:bg-zinc-950 flex items-center justify-center p-4 transition-colors duration-300">
+
+  <!-- ── MAIN CARD ─────────────────────────────────────────────── -->
+  <div class="w-full max-w-xl bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-stone-200 dark:border-zinc-800 flex flex-col overflow-hidden" style="height:580px;">
+
+
+    <!-- ── HEADER ───────────────────────────────────────────────── -->
+    <header class="flex items-center justify-between px-5 py-4 border-b border-stone-100 dark:border-zinc-800">
+
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-500 flex items-center justify-center text-lg">🤖</div>
+        <div>
+          <p class="text-sm font-medium text-stone-800 dark:text-zinc-100">With AI</p>
+          <p class="text-xs text-emerald-500 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+            Online
+          </p>
+        </div>
       </div>
 
-      <!-- Input Area -->
-      <div class="flex gap-2">
-        <input
-          id="user-input"
-          type="text"
-          placeholder="তোমার প্রশ্ন লিখো..."
-          class="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          onkeydown="if (event.key === 'Enter') sendMessage();"
-        />
-        <button
-          onclick="sendMessage()"
-          class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold transition"
-        >
-          পাঠাও
-        </button>
+      <!-- Theme toggle button -->
+      <button
+        onclick="toggleTheme()"
+        class="w-9 h-9 rounded-xl border border-stone-200 dark:border-zinc-700 bg-stone-50 dark:bg-zinc-800 hover:bg-stone-100 dark:hover:bg-zinc-700 transition text-base"
+      >
+        <span id="theme-icon">☀️</span>
+      </button>
+
+    </header>
+
+
+    <!-- ── MESSAGES ─────────────────────────────────────────────── -->
+    <div id="chat-box" class="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
+
+      <!-- Shown until first message -->
+      <div id="empty-state" class="flex flex-col items-center justify-center h-full gap-2 text-stone-400 dark:text-zinc-600 text-sm font-bengali">
+        <span class="text-3xl opacity-30">✦</span>
+        কিছু জিজ্ঞেস করো
       </div>
+
     </div>
 
-    <script>
-      async function sendMessage() {
-        const input = document.getElementById("user-input");
-        const chatBox = document.getElementById("chat-box");
-        const message = input.value.trim();
 
-        if (!message) return;
-        input.value = "";
+    <!-- ── FOOTER ───────────────────────────────────────────────── -->
+    <footer class="border-t border-stone-100 dark:border-zinc-800 px-4 py-3 space-y-2">
 
-        // User message দেখাও
-        chatBox.innerHTML += `
-        <div class="flex justify-end">
-            <p class="bg-blue-500 text-white px-4 py-2 rounded-lg max-w-xs">${message}</p>
+      <!-- Quick suggestion buttons -->
+      <div class="flex gap-2 flex-wrap">
+        <button onclick="quickSend('এখন কয়টা বাজে?')"        class="quick-btn">🕐 সময়</button>
+        <button onclick="quickSend('২৫ গুণ ৪ কত?')"          class="quick-btn">🧮 হিসাব</button>
+        <button onclick="quickSend('তুমি কী কী করতে পারো?')" class="quick-btn">❓ সাহায্য</button>
+      </div>
+
+      <!-- Input + Send -->
+      <div class="flex gap-2 items-end">
+        <textarea
+          id="user-input"
+          rows="1"
+          placeholder="তোমার প্রশ্ন লিখো…"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+          class="flex-1 resize-none rounded-xl bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-stone-800 dark:text-zinc-100 placeholder-stone-400 dark:placeholder-zinc-500 text-sm px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition font-bengali leading-relaxed"
+          style="min-height:40px; max-height:100px;"
+        ></textarea>
+
+        <button
+          onclick="sendMessage()"
+          class="w-10 h-10 rounded-xl bg-indigo-500 hover:bg-indigo-600 active:scale-95 flex items-center justify-center transition shrink-0"
+        >
+          <svg class="w-4 h-4 fill-white" viewBox="0 0 24 24">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </div>
+
+      <p class="text-[10px] text-stone-400 dark:text-zinc-600 text-center">
+        Enter → পাঠাও &nbsp;·&nbsp; Shift+Enter → নতুন লাইন
+      </p>
+
+    </footer>
+  </div>
+
+
+  <!-- ── QUICK BUTTON STYLE ────────────────────────────────────── -->
+  <style>
+    .quick-btn {
+      @apply text-[11px] px-3 py-1 rounded-full cursor-pointer transition font-sans
+             border border-stone-200 dark:border-zinc-700
+             text-stone-500 dark:text-zinc-400
+             bg-stone-50 dark:bg-zinc-800
+             hover:border-indigo-400 hover:text-indigo-500;
+    }
+  </style>
+
+
+  <!-- ============================================================
+       JAVASCRIPT
+  ============================================================ -->
+  <script>
+
+    /* ── THEME ── */
+    let dark = false;
+
+    function toggleTheme() {
+      dark = !dark;
+      document.documentElement.classList.toggle('dark', dark);
+      document.getElementById('theme-icon').textContent = dark ? '🌙' : '☀️';
+    }
+
+
+    /* ── SMALL HELPERS ── */
+
+    function now() {
+      return new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function clearEmpty() {
+      document.getElementById('empty-state')?.remove();
+    }
+
+    function scrollDown() {
+      const box = document.getElementById('chat-box');
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function autoResize(el) {
+      el.style.height = '40px';
+      el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    }
+
+
+    /* ── ADD MESSAGE BUBBLE ── */
+    function addMessage(text, isUser) {
+      clearEmpty();
+
+      const row = document.createElement('div');
+      row.className = `flex gap-2 msg-appear ${isUser ? 'flex-row-reverse' : ''}`;
+
+      // Avatar
+      const av = document.createElement('div');
+      av.className = `w-7 h-7 rounded-lg shrink-0 flex items-center justify-center text-xs mt-0.5
+        ${isUser ? 'bg-stone-200 dark:bg-zinc-700' : 'bg-indigo-500'}`;
+      av.textContent = isUser ? '👤' : '🤖';
+
+      // Bubble wrapper (bubble + time)
+      const wrap = document.createElement('div');
+      wrap.className = `flex flex-col gap-0.5 ${isUser ? 'items-end' : 'items-start'}`;
+
+      const bubble = document.createElement('p');
+      bubble.className = `max-w-xs text-sm px-4 py-2.5 rounded-2xl leading-relaxed font-bengali
+        ${isUser
+          ? 'bg-indigo-500 text-white rounded-br-sm'
+          : 'bg-stone-100 dark:bg-zinc-800 text-stone-800 dark:text-zinc-100 border border-stone-200 dark:border-zinc-700 rounded-bl-sm'}`;
+      bubble.textContent = text;
+
+      const time = document.createElement('span');
+      time.className = 'text-[10px] text-stone-400 dark:text-zinc-600 px-1';
+      time.textContent = now();
+
+      wrap.append(bubble, time);
+      row.append(av, wrap);
+      document.getElementById('chat-box').append(row);
+      scrollDown();
+    }
+
+
+    /* ── TYPING INDICATOR ── */
+    function showTyping() {
+      clearEmpty();
+      const row = document.createElement('div');
+      row.id = 'typing-row';
+      row.className = 'flex gap-2 msg-appear';
+      row.innerHTML = `
+        <div class="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center text-xs shrink-0 mt-0.5">🤖</div>
+        <div class="bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1.5 items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-stone-400 dark:bg-zinc-500 dot-1"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-stone-400 dark:bg-zinc-500 dot-2"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-stone-400 dark:bg-zinc-500 dot-3"></span>
         </div>`;
+      document.getElementById('chat-box').append(row);
+      scrollDown();
+    }
 
-        // Loading দেখাও
-        chatBox.innerHTML += `
-        <div id="loading" class="flex justify-start">
-            <p class="bg-gray-200 px-4 py-2 rounded-lg text-gray-500">ভাবছি...</p>
-        </div>`;
+    function removeTyping() {
+      document.getElementById('typing-row')?.remove();
+    }
 
-        chatBox.scrollTop = chatBox.scrollHeight;
 
-        // API call
-        const res = await fetch("/agent/chat/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message }),
+    /* ── SEND MESSAGE ── */
+    async function sendMessage() {
+      const input   = document.getElementById('user-input');
+      const message = input.value.trim();
+      if (!message) return;
+
+      input.value = '';
+      input.style.height = '40px';
+
+      addMessage(message, true);
+      showTyping();
+
+      try {
+        const res  = await fetch('/agent/chat/', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ message }),
         });
-
         const data = await res.json();
+        removeTyping();
+        addMessage(data.reply || 'উত্তর পাওয়া যায়নি', false);
 
-        // Loading সরিয়ে reply দেখাও
-        document.getElementById("loading").remove();
-        chatBox.innerHTML += `
-        <div class="flex justify-start">
-            <p class="bg-gray-200 px-4 py-2 rounded-lg max-w-xs">${data.reply}</p>
-        </div>`;
-
-        chatBox.scrollTop = chatBox.scrollHeight;
+      } catch {
+        removeTyping();
+        addMessage('⚠️ Server-এ সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করো।', false);
       }
-    </script>
-  </body>
+    }
+
+
+    /* ── QUICK SEND ── */
+    function quickSend(text) {
+      document.getElementById('user-input').value = text;
+      sendMessage();
+    }
+
+  </script>
+
+</body>
 </html>
