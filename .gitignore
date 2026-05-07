@@ -1,0 +1,4 @@
+.env
+withai_venv
+__pycache__/
+*.pyc
