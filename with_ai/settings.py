@@ -15,7 +15,8 @@ SECRET_KEY = secret_key
 
 DEBUG = debug_key
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["with-ai-49rj.onrender.com", "localhost", "127.0.0.1"]
+
 
 
 # Application definition
