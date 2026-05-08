@@ -5,6 +5,10 @@ import json
 from .agent import run_agent
 
 
+def home(request):
+    return render(request, "ai_agent/chat.html")
+
+
 def chat_page(request):
     """Chat UI দেখাবে"""
     return render(request, 'ai_agent/chat.html')
